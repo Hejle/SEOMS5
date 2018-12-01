@@ -1,5 +1,8 @@
 package com.example.joachim.seoms5;
 
+import android.Manifest;
+import android.app.Activity;
+import android.content.pm.PackageManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.content.Context;
@@ -33,7 +36,7 @@ public class SEOMS5 extends AppCompatActivity implements SharedPreferences.OnSha
         setContentView(R.layout.activity_seoms5);
 
         mContext = this;
-
+        acquirePermissions(this);
         //Retrieve the ListView where we’ll display our activity data//
         ListView detectedActivitiesListView = (ListView) findViewById(R.id.activities_listview);
 
@@ -60,6 +63,20 @@ public class SEOMS5 extends AppCompatActivity implements SharedPreferences.OnSha
         PreferenceManager.getDefaultSharedPreferences(this)
                 .unregisterOnSharedPreferenceChangeListener(this);
         super.onPause();
+    }
+
+    public static void acquirePermissions(Activity activity) {
+        if (activity.checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+            activity.requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 100);
+        }
+
+        while (activity.checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     public void requestUpdatesHandler(View view) {

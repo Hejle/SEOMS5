@@ -35,25 +35,25 @@ public class ActivityIntentService extends IntentService {
     //Call the super IntentService constructor with the name for the worker thread//
     public ActivityIntentService() {
         super(TAG);
-        setUpLog();
     }
 
     @Override
     public void onCreate() {
         super.onCreate();
+        setUpLog();
     }
-    //Define an onHandleIntent() method, which will be called whenever an activity detection update is available//
 
+    //Define an onHandleIntent() method, which will be called whenever an activity detection update is available//
     @Override
     protected void onHandleIntent(Intent intent) {
-    //Check whether the Intent contains activity recognition data//
+        //Check whether the Intent contains activity recognition data//
         if (ActivityRecognitionResult.hasResult(intent)) {
 
-    //If data is available, then extract the ActivityRecognitionResult from the Intent//
+            //If data is available, then extract the ActivityRecognitionResult from the Intent//
             ActivityRecognitionResult result = ActivityRecognitionResult.extractResult(intent);
 
             logActivity(result, this.getApplicationContext());
-    //Get an array of DetectedActivity objects//
+            //Get an array of DetectedActivity objects//
             ArrayList<DetectedActivity> detectedActivities = (ArrayList) result.getProbableActivities();
             PreferenceManager.getDefaultSharedPreferences(this)
                     .edit()
@@ -65,12 +65,12 @@ public class ActivityIntentService extends IntentService {
     }
 
     private void logActivity(ActivityRecognitionResult result, Context context) {
-        String activityType =  getActivityString(context ,result.getMostProbableActivity().getType());
+        String activityType = getActivityString(context, result.getMostProbableActivity().getType());
         int confidence = result.getMostProbableActivity().getConfidence();
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("HH:mm:ss");
         String date = simpleDateFormat.format(new Date());
         log(date + ";" + activityType + ";" + confidence);
-        log("/m");
+        log("/n");
     }
 
     //Convert the code for the detected activity type, into the corresponding string//
@@ -143,6 +143,9 @@ public class ActivityIntentService extends IntentService {
         }
 
         log(String.format("Logging stuff", System.currentTimeMillis()));
+        log("Service Stop");
+        logger.close();
+        logger = null;
 
     }
 
@@ -151,5 +154,13 @@ public class ActivityIntentService extends IntentService {
 
         logger.println(data);
         logger.toString();
+    }
+
+    @Override
+    public void onDestroy() {
+        log(String.format("Service, stop"));
+        logger.close();
+        logger = null;
+        super.onDestroy();
     }
 }
