@@ -1,7 +1,14 @@
 package com.example.joachim.seoms5;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.lang.reflect.Type;
+import java.util.Date;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
@@ -10,19 +17,25 @@ import com.google.gson.Gson;
 
 import android.content.Intent;
 import android.app.IntentService;
+import android.os.Environment;
 import android.preference.PreferenceManager;
 import android.content.res.Resources;
+import android.util.Log;
 
 import com.google.gson.reflect.TypeToken;
 import com.google.android.gms.location.ActivityRecognitionResult;
 import com.google.android.gms.location.DetectedActivity;
 
 public class ActivityIntentService extends IntentService {
-    protected static final String TAG = "Activity";
+    protected static final String TAG = ActivitiesAdapter.class.getName();
+
+    private PrintWriter logger;
+    private File file;
 
     //Call the super IntentService constructor with the name for the worker thread//
     public ActivityIntentService() {
         super(TAG);
+        setUpLog();
     }
 
     @Override
@@ -39,6 +52,7 @@ public class ActivityIntentService extends IntentService {
     //If data is available, then extract the ActivityRecognitionResult from the Intent//
             ActivityRecognitionResult result = ActivityRecognitionResult.extractResult(intent);
 
+            logActivity(result, this.getApplicationContext());
     //Get an array of DetectedActivity objects//
             ArrayList<DetectedActivity> detectedActivities = (ArrayList) result.getProbableActivities();
             PreferenceManager.getDefaultSharedPreferences(this)
@@ -49,8 +63,17 @@ public class ActivityIntentService extends IntentService {
 
         }
     }
-    //Convert the code for the detected activity type, into the corresponding string//
 
+    private void logActivity(ActivityRecognitionResult result, Context context) {
+        String activityType =  getActivityString(context ,result.getMostProbableActivity().getType());
+        int confidence = result.getMostProbableActivity().getConfidence();
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("HH:mm:ss");
+        String date = simpleDateFormat.format(new Date());
+        log(date + ";" + activityType + ";" + confidence);
+        log("/m");
+    }
+
+    //Convert the code for the detected activity type, into the corresponding string//
     @SuppressLint("StringFormatInvalid")
     static String getActivityString(Context context, int detectedActivityType) {
         Resources resources = context.getResources();
@@ -75,7 +98,6 @@ public class ActivityIntentService extends IntentService {
     }
 
     static final int[] POSSIBLE_ACTIVITIES = {
-
             DetectedActivity.STILL,
             DetectedActivity.ON_FOOT,
             DetectedActivity.WALKING,
@@ -100,5 +122,34 @@ public class ActivityIntentService extends IntentService {
             detectedActivities = new ArrayList<>();
         }
         return detectedActivities;
+    }
+
+    private void setUpLog() {
+        String name = String.format("Activity-Recognition-%d.txt", System.currentTimeMillis());
+        Log.d("TAG", "Log: " + name);
+
+        String dirname = "";
+        if (Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
+            dirname = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS).getAbsolutePath();
+        }
+
+        file = new File(dirname + File.separator + name);
+        Log.d("TAG", "Log File: " + file);
+
+        try {
+            logger = new PrintWriter(new BufferedWriter(new FileWriter(file, true)));
+        } catch (IOException ex) {
+            throw new RuntimeException(ex);
+        }
+
+        log(String.format("Logging stuff", System.currentTimeMillis()));
+
+    }
+
+    private void log(String data) {
+        Log.d(TAG, data);
+
+        logger.println(data);
+        logger.toString();
     }
 }

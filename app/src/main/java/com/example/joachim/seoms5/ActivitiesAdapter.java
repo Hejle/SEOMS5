@@ -1,8 +1,14 @@
 package com.example.joachim.seoms5;
 
+import android.os.Environment;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -17,6 +23,7 @@ import com.google.android.gms.location.DetectedActivity;
 
 
 public class ActivitiesAdapter extends ArrayAdapter<DetectedActivity> {
+
 
     ActivitiesAdapter(Context context,
                       ArrayList<DetectedActivity> detectedActivities) {
@@ -35,8 +42,8 @@ public class ActivitiesAdapter extends ArrayAdapter<DetectedActivity> {
         }
 
         //Retrieve the TextViews where we’ll display the activity type, and percentage//
-        TextView activityName = (TextView) view.findViewById(R.id.activity_type);
-        TextView activityConfidenceLevel = (TextView) view.findViewById(
+        TextView activityName = view.findViewById(R.id.activity_type);
+        TextView activityConfidenceLevel = view.findViewById(
                 R.id.confidence_percentage);
 
         //If an activity is detected...//
@@ -58,12 +65,15 @@ public class ActivitiesAdapter extends ArrayAdapter<DetectedActivity> {
 
         ArrayList<DetectedActivity> temporaryList = new ArrayList<>();
         for (int i = 0; i < ActivityIntentService.POSSIBLE_ACTIVITIES.length; i++) {
-            int confidence = detectedActivitiesMap.containsKey(ActivityIntentService.POSSIBLE_ACTIVITIES[i]) ?
-                    detectedActivitiesMap.get(ActivityIntentService.POSSIBLE_ACTIVITIES[i]) : 0;
+            int confidence;
+            if (detectedActivitiesMap.containsKey(ActivityIntentService.POSSIBLE_ACTIVITIES[i]))
+                confidence = detectedActivitiesMap.get(ActivityIntentService.POSSIBLE_ACTIVITIES[i]);
+            else confidence = 0;
 
             //Add the object to a temporaryList//
             temporaryList.add(new
                     DetectedActivity(ActivityIntentService.POSSIBLE_ACTIVITIES[i], confidence));
+
         }
         //Remove all elements from the temporaryList//
         this.clear();
