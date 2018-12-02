@@ -20,6 +20,7 @@ import android.app.IntentService;
 import android.os.Environment;
 import android.preference.PreferenceManager;
 import android.content.res.Resources;
+import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
 import com.google.gson.reflect.TypeToken;
@@ -40,7 +41,7 @@ public class ActivityIntentService extends IntentService {
     @Override
     public void onCreate() {
         super.onCreate();
-        setUpLog();
+        //setUpLog();
     }
 
     //Define an onHandleIntent() method, which will be called whenever an activity detection update is available//
@@ -52,7 +53,13 @@ public class ActivityIntentService extends IntentService {
             //If data is available, then extract the ActivityRecognitionResult from the Intent//
             ActivityRecognitionResult result = ActivityRecognitionResult.extractResult(intent);
 
-            logActivity(result, this.getApplicationContext());
+            Intent broadcastintent = new Intent();
+            broadcastintent.setAction(SEOMS5.ResponseReciever.ACTIVITYRESULTACTION);
+            broadcastintent.putExtra("result", result);
+            LocalBroadcastManager localBroadcastManager = LocalBroadcastManager.getInstance(this);
+            localBroadcastManager.sendBroadcast(broadcastintent);
+
+           // logActivity(result, this.getApplicationContext());
             //Get an array of DetectedActivity objects//
             ArrayList<DetectedActivity> detectedActivities = (ArrayList) result.getProbableActivities();
             PreferenceManager.getDefaultSharedPreferences(this)
@@ -158,9 +165,9 @@ public class ActivityIntentService extends IntentService {
 
     @Override
     public void onDestroy() {
-        log(String.format("Service, stop"));
-        logger.close();
-        logger = null;
+        //log(String.format("Service, stop"));
+        //logger.close();
+        //logger = null;
         super.onDestroy();
     }
 }

@@ -2,7 +2,10 @@ package com.example.joachim.seoms5;
 
 import android.Manifest;
 import android.app.Activity;
+import android.content.BroadcastReceiver;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.content.Context;
@@ -14,6 +17,7 @@ import android.content.SharedPreferences;
 import android.view.View;
 
 import com.google.android.gms.location.ActivityRecognitionClient;
+import com.google.android.gms.location.ActivityRecognitionResult;
 import com.google.android.gms.location.DetectedActivity;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
@@ -26,6 +30,7 @@ public class SEOMS5 extends AppCompatActivity implements SharedPreferences.OnSha
     private Context mContext;
     public static final String DETECTED_ACTIVITY = ".DETECTED_ACTIVITY";
     //Define an ActivityRecognitionClient//
+    private ResponseReciever reciever;
 
     private ActivityRecognitionClient mActivityRecognitionClient;
     private ActivitiesAdapter mAdapter;
@@ -56,6 +61,10 @@ public class SEOMS5 extends AppCompatActivity implements SharedPreferences.OnSha
         PreferenceManager.getDefaultSharedPreferences(this)
                 .registerOnSharedPreferenceChangeListener(this);
         updateDetectedActivitiesList();
+        IntentFilter broadcastFilter = new IntentFilter(ResponseReciever.ACTIVITYRESULTACTION);
+        reciever = new ResponseReciever();
+        LocalBroadcastManager localBroadcastManager = LocalBroadcastManager.getInstance(this);
+        localBroadcastManager.registerReceiver(reciever, broadcastFilter);
     }
 
     @Override
@@ -63,6 +72,8 @@ public class SEOMS5 extends AppCompatActivity implements SharedPreferences.OnSha
         PreferenceManager.getDefaultSharedPreferences(this)
                 .unregisterOnSharedPreferenceChangeListener(this);
         super.onPause();
+        LocalBroadcastManager localBroadcastManager = LocalBroadcastManager.getInstance(this);
+        localBroadcastManager.unregisterReceiver(reciever );
     }
 
     public static void acquirePermissions(Activity activity) {
@@ -113,6 +124,27 @@ public class SEOMS5 extends AppCompatActivity implements SharedPreferences.OnSha
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String s) {
         if (s.equals(DETECTED_ACTIVITY)) {
             updateDetectedActivitiesList();
+        }
+    }
+
+    public class ResponseReciever extends BroadcastReceiver {
+
+        public static final String ACTIVITYRESULTACTION= "com.example.joachim.seoms5";
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            ActivityRecognitionResult result = null;
+            try {
+                result = intent.getParcelableExtra("result");
+            } catch (ClassCastException e) {
+                throw new RuntimeException();
+            }
+
+            if (result != null) {
+                //Do logging here?
+                ActivityIntentService.getActivityString(context, result.getMostProbableActivity().getType());
+            }
+
         }
     }
 }
