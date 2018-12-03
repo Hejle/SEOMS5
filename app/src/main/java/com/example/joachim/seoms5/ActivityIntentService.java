@@ -30,9 +30,6 @@ import com.google.android.gms.location.DetectedActivity;
 public class ActivityIntentService extends IntentService {
     protected static final String TAG = ActivitiesAdapter.class.getName();
 
-    private PrintWriter logger;
-    private File file;
-
     //Call the super IntentService constructor with the name for the worker thread//
     public ActivityIntentService() {
         super(TAG);
@@ -41,7 +38,6 @@ public class ActivityIntentService extends IntentService {
     @Override
     public void onCreate() {
         super.onCreate();
-        //setUpLog();
     }
 
     //Define an onHandleIntent() method, which will be called whenever an activity detection update is available//
@@ -59,7 +55,6 @@ public class ActivityIntentService extends IntentService {
             LocalBroadcastManager localBroadcastManager = LocalBroadcastManager.getInstance(this);
             localBroadcastManager.sendBroadcast(broadcastintent);
 
-           // logActivity(result, this.getApplicationContext());
             //Get an array of DetectedActivity objects//
             ArrayList<DetectedActivity> detectedActivities = (ArrayList) result.getProbableActivities();
             PreferenceManager.getDefaultSharedPreferences(this)
@@ -69,15 +64,6 @@ public class ActivityIntentService extends IntentService {
                     .apply();
 
         }
-    }
-
-    private void logActivity(ActivityRecognitionResult result, Context context) {
-        String activityType = getActivityString(context, result.getMostProbableActivity().getType());
-        int confidence = result.getMostProbableActivity().getConfidence();
-        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("HH:mm:ss");
-        String date = simpleDateFormat.format(new Date());
-        log(date + ";" + activityType + ";" + confidence);
-        log("/n");
     }
 
     //Convert the code for the detected activity type, into the corresponding string//
@@ -129,45 +115,5 @@ public class ActivityIntentService extends IntentService {
             detectedActivities = new ArrayList<>();
         }
         return detectedActivities;
-    }
-
-    private void setUpLog() {
-        String name = String.format("Activity-Recognition-%d.txt", System.currentTimeMillis());
-        Log.d("TAG", "Log: " + name);
-
-        String dirname = "";
-        if (Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
-            dirname = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS).getAbsolutePath();
-        }
-
-        file = new File(dirname + File.separator + name);
-        Log.d("TAG", "Log File: " + file);
-
-        try {
-            logger = new PrintWriter(new BufferedWriter(new FileWriter(file, true)));
-        } catch (IOException ex) {
-            throw new RuntimeException(ex);
-        }
-
-        log(String.format("Logging stuff", System.currentTimeMillis()));
-        log("Service Stop");
-        logger.close();
-        logger = null;
-
-    }
-
-    private void log(String data) {
-        Log.d(TAG, data);
-
-        logger.println(data);
-        logger.toString();
-    }
-
-    @Override
-    public void onDestroy() {
-        //log(String.format("Service, stop"));
-        //logger.close();
-        //logger = null;
-        super.onDestroy();
     }
 }

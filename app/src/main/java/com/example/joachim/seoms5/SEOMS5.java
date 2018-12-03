@@ -5,11 +5,13 @@ import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
+import android.os.Environment;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.content.Context;
 import android.content.Intent;
+import android.util.Log;
 import android.widget.ListView;
 import android.app.PendingIntent;
 import android.preference.PreferenceManager;
@@ -22,26 +24,39 @@ import com.google.android.gms.location.DetectedActivity;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 
 
 public class SEOMS5 extends AppCompatActivity implements SharedPreferences.OnSharedPreferenceChangeListener {
 
-    private Context mContext;
+    private Context context;
+    protected static final String TAG = ActivitiesAdapter.class.getName();
     public static final String DETECTED_ACTIVITY = ".DETECTED_ACTIVITY";
     //Define an ActivityRecognitionClient//
-    private ResponseReciever reciever;
+    private ResponseReciever receiver;
 
-    private ActivityRecognitionClient mActivityRecognitionClient;
-    private ActivitiesAdapter mAdapter;
+
+    private PrintWriter logger;
+    private File file;
+
+    private ActivityRecognitionClient activityRecognitionClient;
+    private ActivitiesAdapter activitiesAdapter;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_seoms5);
 
-        mContext = this;
+        context = this;
         acquirePermissions(this);
+        setUpLog();
         //Retrieve the ListView where we’ll display our activity data//
         ListView detectedActivitiesListView = (ListView) findViewById(R.id.activities_listview);
 
@@ -50,9 +65,9 @@ public class SEOMS5 extends AppCompatActivity implements SharedPreferences.OnSha
                         DETECTED_ACTIVITY, ""));
 
         //Bind the adapter to the ListView//
-        mAdapter = new ActivitiesAdapter(this, detectedActivities);
-        detectedActivitiesListView.setAdapter(mAdapter);
-        mActivityRecognitionClient = new ActivityRecognitionClient(this);
+        activitiesAdapter = new ActivitiesAdapter(this, detectedActivities);
+        detectedActivitiesListView.setAdapter(activitiesAdapter);
+        activityRecognitionClient = new ActivityRecognitionClient(this);
     }
 
     @Override
@@ -62,9 +77,9 @@ public class SEOMS5 extends AppCompatActivity implements SharedPreferences.OnSha
                 .registerOnSharedPreferenceChangeListener(this);
         updateDetectedActivitiesList();
         IntentFilter broadcastFilter = new IntentFilter(ResponseReciever.ACTIVITYRESULTACTION);
-        reciever = new ResponseReciever();
+        receiver = new ResponseReciever();
         LocalBroadcastManager localBroadcastManager = LocalBroadcastManager.getInstance(this);
-        localBroadcastManager.registerReceiver(reciever, broadcastFilter);
+        localBroadcastManager.registerReceiver(receiver, broadcastFilter);
     }
 
     @Override
@@ -73,7 +88,7 @@ public class SEOMS5 extends AppCompatActivity implements SharedPreferences.OnSha
                 .unregisterOnSharedPreferenceChangeListener(this);
         super.onPause();
         LocalBroadcastManager localBroadcastManager = LocalBroadcastManager.getInstance(this);
-        localBroadcastManager.unregisterReceiver(reciever );
+        localBroadcastManager.unregisterReceiver(receiver);
     }
 
     public static void acquirePermissions(Activity activity) {
@@ -92,7 +107,7 @@ public class SEOMS5 extends AppCompatActivity implements SharedPreferences.OnSha
 
     public void requestUpdatesHandler(View view) {
         //Set the activity detection interval. I’m using 3 seconds//
-        Task<Void> task = mActivityRecognitionClient.requestActivityUpdates(
+        Task<Void> task = activityRecognitionClient.requestActivityUpdates(
                 30,
                 getActivityDetectionPendingIntent());
         task.addOnSuccessListener(new OnSuccessListener<Void>() {
@@ -114,10 +129,10 @@ public class SEOMS5 extends AppCompatActivity implements SharedPreferences.OnSha
     //Process the list of activities//
     protected void updateDetectedActivitiesList() {
         ArrayList<DetectedActivity> detectedActivities = ActivityIntentService.detectedActivitiesFromJson(
-                PreferenceManager.getDefaultSharedPreferences(mContext)
+                PreferenceManager.getDefaultSharedPreferences(context)
                         .getString(DETECTED_ACTIVITY, ""));
 
-        mAdapter.updateActivities(detectedActivities);
+        activitiesAdapter.updateActivities(detectedActivities);
     }
 
     @Override
@@ -125,6 +140,57 @@ public class SEOMS5 extends AppCompatActivity implements SharedPreferences.OnSha
         if (s.equals(DETECTED_ACTIVITY)) {
             updateDetectedActivitiesList();
         }
+    }
+
+    private void setUpLog() {
+        String name = String.format("Activity-Recognition-%d.txt", System.currentTimeMillis());
+        Log.d("TAG", "Log: " + name);
+
+        final String dirname;
+        if (Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
+            dirname = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS).getAbsolutePath();
+        } else {
+            dirname = context.getApplicationContext().getFilesDir().getAbsolutePath();
+        }
+
+        file = new File(dirname + File.separator + name);
+        Log.d("TAG", "Log File: " + file);
+
+        try {
+            logger = new PrintWriter(new BufferedWriter(new FileWriter(file, true)));
+        } catch (IOException ex) {
+            throw new RuntimeException(ex);
+        }
+
+        log(String.format("Logging stuff", System.currentTimeMillis()));
+
+    }
+
+    private void log(String data) {
+        try {
+            Log.d(TAG, data);
+
+            logger.println(data);
+            logger.toString();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        log(String.format("Service, stop"));
+        logger.close();
+        logger = null;
+    }
+
+    private void logActivity(ActivityRecognitionResult result, Context context) {
+        String activityType = ActivityIntentService.getActivityString(context, result.getMostProbableActivity().getType());
+        int confidence = result.getMostProbableActivity().getConfidence();
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("HH:mm:ss");
+        String date = simpleDateFormat.format(new Date());
+        log(date + ";" + activityType + ";" + confidence);
     }
 
     public class ResponseReciever extends BroadcastReceiver {
@@ -141,8 +207,7 @@ public class SEOMS5 extends AppCompatActivity implements SharedPreferences.OnSha
             }
 
             if (result != null) {
-                //Do logging here?
-                ActivityIntentService.getActivityString(context, result.getMostProbableActivity().getType());
+                logActivity(result, context);
             }
 
         }
