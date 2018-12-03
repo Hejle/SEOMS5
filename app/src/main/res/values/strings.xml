@@ -10,4 +10,5 @@
     <string name="unknown_activity">Unknown activity</string>
     <string name="vehicle">In a vehicle</string>
     <string name="walking">Walking</string>
+    <string name="stoplog">Stop Logging</string>
 </resources>

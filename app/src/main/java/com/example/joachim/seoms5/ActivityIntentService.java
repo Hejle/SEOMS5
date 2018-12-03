@@ -1,31 +1,20 @@
 package com.example.joachim.seoms5;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.lang.reflect.Type;
-import java.util.Date;
-
 import android.annotation.SuppressLint;
-import android.content.Context;
-
-import com.google.gson.Gson;
-
-import android.content.Intent;
 import android.app.IntentService;
-import android.os.Environment;
-import android.preference.PreferenceManager;
+import android.content.Context;
+import android.content.Intent;
 import android.content.res.Resources;
+import android.preference.PreferenceManager;
 import android.support.v4.content.LocalBroadcastManager;
-import android.util.Log;
 
-import com.google.gson.reflect.TypeToken;
 import com.google.android.gms.location.ActivityRecognitionResult;
 import com.google.android.gms.location.DetectedActivity;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+
+import java.lang.reflect.Type;
+import java.util.ArrayList;
 
 public class ActivityIntentService extends IntentService {
     protected static final String TAG = ActivitiesAdapter.class.getName();

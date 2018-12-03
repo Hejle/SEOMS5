@@ -56,7 +56,6 @@ public class SEOMS5 extends AppCompatActivity implements SharedPreferences.OnSha
 
         context = this;
         acquirePermissions(this);
-        setUpLog();
         //Retrieve the ListView where we’ll display our activity data//
         ListView detectedActivitiesListView = (ListView) findViewById(R.id.activities_listview);
 
@@ -107,6 +106,7 @@ public class SEOMS5 extends AppCompatActivity implements SharedPreferences.OnSha
 
     public void requestUpdatesHandler(View view) {
         //Set the activity detection interval. I’m using 3 seconds//
+        setUpLog();
         Task<Void> task = activityRecognitionClient.requestActivityUpdates(
                 30,
                 getActivityDetectionPendingIntent());
@@ -167,19 +167,22 @@ public class SEOMS5 extends AppCompatActivity implements SharedPreferences.OnSha
     }
 
     private void log(String data) {
-        try {
-            Log.d(TAG, data);
+        //Log.d(TAG, data);
 
-            logger.println(data);
-            logger.toString();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        logger.println(data);
+        logger.toString();
+
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
+        /*log(String.format("Service, stop"));
+        logger.close();
+        logger = null;*/
+    }
+
+    public void stopLogging(View v) {
         log(String.format("Service, stop"));
         logger.close();
         logger = null;
