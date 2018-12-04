@@ -1,25 +1,18 @@
 package com.example.joachim.seoms5;
 
-import android.os.Environment;
+import android.content.Context;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.util.ArrayList;
-import java.util.HashMap;
-
-import android.widget.ArrayAdapter;
-import android.content.Context;
 import android.view.LayoutInflater;
-import android.widget.TextView;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
+import android.widget.TextView;
 
 import com.google.android.gms.location.DetectedActivity;
+
+import java.util.ArrayList;
+import java.util.HashMap;
 
 
 public class ActivitiesAdapter extends ArrayAdapter<DetectedActivity> {

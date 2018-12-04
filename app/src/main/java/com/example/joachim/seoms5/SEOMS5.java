@@ -177,9 +177,9 @@ public class SEOMS5 extends AppCompatActivity implements SharedPreferences.OnSha
     @Override
     public void onDestroy() {
         super.onDestroy();
-        /*log(String.format("Service, stop"));
+        log(String.format("Service, stop"));
         logger.close();
-        logger = null;*/
+        logger = null;
     }
 
     public void stopLogging(View v) {
